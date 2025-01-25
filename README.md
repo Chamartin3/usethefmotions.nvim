@@ -1,8 +1,17 @@
 # Use the f* motions
 
-A tiny Neovim plugin that nudges you to **use the f\*\*\*ing motions** instead of mashing the arrow keys. When it detects that you've been pressing the same
-arrow key repeatedly, it shows a notification reminding you of better
-vim motions to use.
+A tiny Neovim plugin that nudges you to **use the f\*\*\*ing motions** instead
+of mashing the arrow keys. When it catches you holding down the same arrow
+key, it pops up a friendly little notification reminding you
+that vim has, you know, motions.
+
+## Caught in the act
+
+This is roughly what happens after you press `<Down>` one too many times:
+
+![Example notification telling you to stop pressing the arrow keys](./assets/notification-example.png)
+
+Rude? A little. Effective? Surprisingly, yes.
 
 ## Features
 
@@ -10,6 +19,8 @@ vim motions to use.
   (`j`, `k`, `{`, `}`, `%`, counts, ...).
 - Detects repeated `<Left>`/`<Right>` presses and reminds you about horizontal
   motions (`h`, `l`, `w`, `b`, `e`, `ge`, `^`, `$`, `A`, ...).
-- Cooldown between notifications so you don't get spammed.
-- Toggle on/off at runtime.
-- Fully configurable: messages, titles, repetition thresholds, cooldown, keymaps, etc.
+- Cooldown between notifications so it doesn't turn into a nag-fest.
+- Toggle on/off at runtime when you really, really just want to hold an arrow
+  key in peace.
+- Fully configurable: messages, titles, repetition thresholds, cooldown,
+  keymaps, etc.
