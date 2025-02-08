@@ -2,9 +2,6 @@ local reminders = require('usethefmotions.reminders')
 
 local M = {}
 
-local VERTICAL_KEYS = { '<Up>', '<Down>' }
-local HORIZONTAL_KEYS = { '<Left>', '<Right>' }
-
 ---@param key string
 ---@return string
 local function termcode(key)
@@ -12,30 +9,38 @@ local function termcode(key)
 end
 
 ---@param state usethefmotions.State
----@param keys string[]
-local function follow(state, keys)
-  for _, key in ipairs(keys) do
-    state.followed[termcode(key)] = { repr = key, count = 0 }
+local function register_groups(state)
+  for name, group in pairs(state.config.groups) do
+    for _, key in ipairs(group.keys) do
+      state.followed[termcode(key)] = { repr = key, group = name, count = 0 }
+    end
   end
 end
 
 ---@param state usethefmotions.State
 ---@param key string
----@param direction "vertical" | "horizontal"
-local function bind_key(state, key, direction)
+---@param group_name string
+local function bind_key(state, key, group_name)
   vim.keymap.set('n', key, function()
-    local entry = state.followed[termcode(key)]
-    if entry and state.config.breakpoints[entry.count] then
-      reminders.notify(state, direction)
+    local code = termcode(key)
+
+    if reminders.is_blocked(state, code) then
+      return '<Ignore>'
     end
+
+    local entry = state.followed[code]
+    local group = state.config.groups[group_name]
+    if entry and group.breakpoints[entry.count] then
+      reminders.notify(state, group_name, code)
+    end
+
     return key
   end, { expr = true, noremap = true })
 end
 
 ---@param state usethefmotions.State
 function M.attach(state)
-  follow(state, VERTICAL_KEYS)
-  follow(state, HORIZONTAL_KEYS)
+  register_groups(state)
 
   local ns = vim.api.nvim_create_namespace('usethefmotions_keypress')
   vim.on_key(function(char)
@@ -54,11 +59,10 @@ function M.attach(state)
     end
   end, ns)
 
-  for _, key in ipairs(VERTICAL_KEYS) do
-    bind_key(state, key, 'vertical')
-  end
-  for _, key in ipairs(HORIZONTAL_KEYS) do
-    bind_key(state, key, 'horizontal')
+  for name, group in pairs(state.config.groups) do
+    for _, key in ipairs(group.keys) do
+      bind_key(state, key, name)
+    end
   end
 end
 

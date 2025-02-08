@@ -1,24 +1,22 @@
 local messages = require('usethefmotions.constants.messages')
 
----@class usethefmotions.Messages
----@field vertical?   string
----@field horizontal? string
-
----@class usethefmotions.Titles
----@field vertical?   string
----@field horizontal? string
-
 ---Repetition counts at which a reminder fires.
 ---Either a list (`{ 5, 10 }`) or a set (`{ [5] = true, [10] = true }`).
 ---@alias usethefmotions.Breakpoints integer[] | table<integer, boolean>
 
+---A named group of keys that share a reminder and (optionally) a block timeout.
+---@class usethefmotions.Group
+---@field keys        string[]              -- e.g. { '<Up>', '<Down>' }
+---@field breakpoints? usethefmotions.Breakpoints
+---@field title?      string
+---@field message?    string
+---@field block_ms?   integer               -- 0 (default) = no blocking
+
 ---@class usethefmotions.Config
 ---@field enabled?       boolean
 ---@field cooldown_ms?   integer
----@field breakpoints?   usethefmotions.Breakpoints
----@field messages?      usethefmotions.Messages
----@field titles?        usethefmotions.Titles
 ---@field toggle_keymap? string|false
+---@field groups?        table<string, usethefmotions.Group>
 
 local M = {}
 
@@ -26,19 +24,25 @@ local M = {}
 M.defaults = {
   enabled = true,
   cooldown_ms = 5 * 60 * 1000,
-  breakpoints = { 5, 10 },
   toggle_keymap = '<leader>nm',
-  messages = {
-    vertical = messages.vertical,
-    horizontal = messages.horizontal,
-  },
-  titles = {
-    vertical = messages.title_vertical,
-    horizontal = messages.title_horizontal,
+  groups = {
+    vertical = {
+      keys = { '<Up>', '<Down>' },
+      breakpoints = { 5, 10 },
+      block_ms = 0,
+      title = messages.title_vertical,
+      message = messages.vertical,
+    },
+    horizontal = {
+      keys = { '<Left>', '<Right>' },
+      breakpoints = { 5, 10 },
+      block_ms = 0,
+      title = messages.title_horizontal,
+      message = messages.horizontal,
+    },
   },
 }
 
----Normalize a breakpoints value into a set `{ [n] = true }`.
 ---@param bp usethefmotions.Breakpoints
 ---@return table<integer, boolean>
 local function normalize_breakpoints(bp)
@@ -56,7 +60,10 @@ end
 ---@return usethefmotions.Config
 function M.resolve(user)
   local cfg = vim.tbl_deep_extend('force', {}, M.defaults, user or {})
-  cfg.breakpoints = normalize_breakpoints(cfg.breakpoints)
+  for _, group in pairs(cfg.groups) do
+    group.breakpoints = normalize_breakpoints(group.breakpoints or { 5, 10 })
+    group.block_ms = group.block_ms or 0
+  end
   return cfg
 end
 
