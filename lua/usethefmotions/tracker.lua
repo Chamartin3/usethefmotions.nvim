@@ -1,4 +1,5 @@
 local reminders = require('usethefmotions.reminders')
+local state_mod = require('usethefmotions.state')
 
 local M = {}
 
@@ -10,6 +11,7 @@ end
 
 ---@param state usethefmotions.State
 local function register_groups(state)
+  state.followed = {}
   for name, group in pairs(state.config.groups) do
     if group.enabled then
       for _, key in ipairs(group.keys) do
@@ -38,13 +40,34 @@ local function bind_key(state, key, group_name)
 
     return key
   end, { expr = true, noremap = true })
+
+  table.insert(state.bound_keys, key)
+end
+
+---Detach a previously-attached tracker. Safe to call multiple times.
+---@param state usethefmotions.State
+function M.detach(state)
+  if state.ns then
+    vim.on_key(nil, state.ns)
+    state.ns = nil
+  end
+  if state.augroup then
+    vim.api.nvim_del_augroup_by_id(state.augroup)
+    state.augroup = nil
+  end
+  for _, key in ipairs(state.bound_keys) do
+    pcall(vim.keymap.del, 'n', key)
+  end
+  state.bound_keys = {}
+  state.followed = {}
 end
 
 ---@param state usethefmotions.State
 function M.attach(state)
+  M.detach(state)
   register_groups(state)
 
-  local ns = vim.api.nvim_create_namespace('usethefmotions_keypress')
+  state.ns = vim.api.nvim_create_namespace('usethefmotions_keypress')
   vim.on_key(function(char)
     local entry = state.followed[char]
     local repr = entry and entry.repr or char
@@ -59,7 +82,15 @@ function M.attach(state)
     if entry then
       entry.count = state.repetition
     end
-  end, ns)
+  end, state.ns)
+
+  state.augroup = vim.api.nvim_create_augroup('usethefmotions', { clear = true })
+  vim.api.nvim_create_autocmd({ 'InsertEnter', 'CmdlineEnter', 'TermEnter' }, {
+    group = state.augroup,
+    callback = function()
+      state_mod.reset_repetition(state)
+    end,
+  })
 
   for name, group in pairs(state.config.groups) do
     if group.enabled then
