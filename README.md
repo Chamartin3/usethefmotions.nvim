@@ -134,8 +134,31 @@ opts = {
 
 ### Commands
 
-- `:UseTheFMotions toggle` — flip it on or off.
-- `:UseTheFMotions status` — tell me if it's currently nagging.
+- `:UseTheFMotions toggle` — flip the plugin on or off.
+- `:UseTheFMotions enable` / `:UseTheFMotions disable` — explicit on/off.
+- `:UseTheFMotions toggle <group>` — flip a single group (e.g.
+  `:UseTheFMotions toggle backspace`). `enable` and `disable` also take
+  an optional group name and tab-complete from the registered groups.
+- `:UseTheFMotions status` — print the global state and which groups
+  are currently on.
+
+### Lua API
+
+```lua
+local m = require('usethefmotions')
+
+m.enable()                          -- global enable
+m.disable()                         -- global disable
+m.toggle()                          -- global toggle
+m.is_enabled()                      -- boolean
+
+m.enable_group('vertical')          -- per-group
+m.disable_group('jk_holding')
+m.toggle_group('backspace')
+
+m.group_names()                     -- { 'backspace', 'delete_char', ... }
+m.stats()                           -- { enabled, groups = { name = { enabled, last_reminder_ms } } }
+```
 
 ### Health check
 
