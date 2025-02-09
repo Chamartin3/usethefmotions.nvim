@@ -34,6 +34,23 @@ describe('config.resolve', function()
     assert.is_nil(cfg.groups.vertical.breakpoints[5])
   end)
 
+  it('defaults each built-in preset enabled flag correctly', function()
+    local cfg = config.resolve()
+    assert.is_true(cfg.groups.vertical.enabled)
+    assert.is_true(cfg.groups.horizontal.enabled)
+    assert.is_true(cfg.groups.backspace.enabled)
+    assert.is_false(cfg.groups.jk_holding.enabled)
+    assert.is_false(cfg.groups.hl_holding.enabled)
+    assert.is_false(cfg.groups.delete_char.enabled)
+  end)
+
+  it('lets a user opt into a disabled preset by name', function()
+    local cfg = config.resolve({ groups = { jk_holding = { enabled = true } } })
+    assert.is_true(cfg.groups.jk_holding.enabled)
+    -- the preset's defaults are still there
+    assert.same({ 'j', 'k' }, cfg.groups.jk_holding.keys)
+  end)
+
   it('lets users define their own groups', function()
     local cfg = config.resolve({
       groups = {

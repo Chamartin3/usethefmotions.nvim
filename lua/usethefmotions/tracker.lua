@@ -11,8 +11,10 @@ end
 ---@param state usethefmotions.State
 local function register_groups(state)
   for name, group in pairs(state.config.groups) do
-    for _, key in ipairs(group.keys) do
-      state.followed[termcode(key)] = { repr = key, group = name, count = 0 }
+    if group.enabled then
+      for _, key in ipairs(group.keys) do
+        state.followed[termcode(key)] = { repr = key, group = name, count = 0 }
+      end
     end
   end
 end
@@ -60,8 +62,10 @@ function M.attach(state)
   end, ns)
 
   for name, group in pairs(state.config.groups) do
-    for _, key in ipairs(group.keys) do
-      bind_key(state, key, name)
+    if group.enabled then
+      for _, key in ipairs(group.keys) do
+        bind_key(state, key, name)
+      end
     end
   end
 end

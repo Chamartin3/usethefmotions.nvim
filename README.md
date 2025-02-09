@@ -12,26 +12,33 @@ This is roughly what happens after you press `<Down>` one too many times:
 ![Example notification telling you to stop pressing the arrow keys](./assets/notification-example.png)
 
 That's the **light option**: a polite reminder and you carry on with your day.
-If polite reminders aren't working on you (no judgement), there's also the
-**nuclear option** — see [Blocking the keys](#blocking-the-keys-the-nuclear-option)
-below. It's the one I actually recommend if you want to force yourself to
-learn the motions.
+If polite reminders aren't working on you (no judgement), there's also a
+**block timeout** that disables the offending key for a few seconds — see
+[Blocking the keys](#blocking-the-keys) below.
+
+> **The honest recommendation:** if you really want to learn the motions,
+> just unmap the arrow keys entirely (`vim.keymap.set({'n','v'}, '<Up>',
+> '<Nop>')` and friends). This plugin is for the rest of us — people who
+> don't want to go full cold-turkey but still want a nudge, or a short
+> timeout, when they catch themselves backsliding.
 
 ## Features
 
-- Detects repeated `<Up>`/`<Down>` presses and reminds you about vertical motions
-  (`j`, `k`, `{`, `}`, `%`, counts, ...).
-- Detects repeated `<Left>`/`<Right>` presses and reminds you about horizontal
-  motions (`h`, `l`, `w`, `b`, `e`, `ge`, `^`, `$`, `A`, ...).
-- Optional **block timeout** that disables the offending key for a while
-  after a notification — the actual cure for arrow-key muscle memory.
-- Define your own key groups (e.g. `<BS>`-mashing in normal mode) with
-  their own messages and block timeouts.
+- A handful of built-in **presets** for common bad habits:
+  - `vertical` — `<Up>`/`<Down>` mashing _(on by default)_
+  - `horizontal` — `<Left>`/`<Right>` mashing _(on by default)_
+  - `backspace` — `<BS>` one-char-at-a-time deleting _(on by default)_
+  - `jk_holding` — holding `j`/`k` as a scroll wheel _(opt-in)_
+  - `hl_holding` — holding `h`/`l` instead of using word motions _(opt-in)_
+  - `delete_char` — mashing `x` instead of `d{motion}` _(opt-in)_
+- Optional **block timeout** per group that disables the offending key
+  for a while after a notification — the actual cure for muscle memory.
+- Define your own groups for any key habit you want to break.
 - Cooldown between notifications so it doesn't turn into a nag-fest.
 - Toggle on/off at runtime when you really, really just want to hold an arrow
   key in peace.
-- Fully configurable: messages, titles, repetition thresholds, cooldown,
-  keymaps, key groups, block timeouts.
+- Fully configurable: per-group enable/disable, messages, titles,
+  repetition thresholds, cooldown, keymaps, block timeouts.
 
 ## Installation
 
@@ -68,34 +75,32 @@ whatever annoys you:
     -- keymap that flips the plugin on/off. set to false to skip the mapping.
     toggle_keymap = '<leader>nm',
 
-    -- named key groups. each group shares a message, a title, breakpoints
-    -- and an optional block timeout. you can add your own groups too.
+    -- named key groups. each group shares a message, a title, breakpoints,
+    -- and an optional block timeout. presets shipped with the plugin can be
+    -- enabled or disabled individually; you can also add your own.
     groups = {
       vertical = {
+        enabled = true,            -- set to false to disable this preset
         keys = { '<Up>', '<Down>' },
         breakpoints = { 5, 10 },   -- list or set: { [5] = true, [10] = true }
-        block_ms = 0,              -- 0 = no blocking (light option)
+        block_ms = 0,              -- 0 = no blocking (just the notification)
         title = 'Remember that you can move vertically with <j>, <k>',
         message = '...your own pep talk...',
       },
-      horizontal = {
-        keys = { '<Left>', '<Right>' },
-        breakpoints = { 5, 10 },
-        block_ms = 0,
-        title = 'Remember that you can move horizontally with <h> and <l>',
-        message = '...your own pep talk...',
-      },
+      -- opt-in preset: holding j/k like a scroll wheel
+      jk_holding = { enabled = true },
     },
   },
 }
 ```
 
-### Blocking the keys (the nuclear option)
+### Blocking the keys
 
-A notification is easy to dismiss and ignore. The actually-effective setup
-is to **disable the key entirely** for a few seconds after the notification
-fires — your hand reaches for `<Down>`, nothing happens, and you finally
-press `j`. Set `block_ms` to a positive number to enable it:
+A notification is easy to dismiss and ignore. The middle-ground setup
+between "do nothing" and "unmap arrows entirely" is to **disable the
+key for a few seconds** after the notification fires — your hand reaches
+for `<Down>`, nothing happens, and you finally press `j`. Set `block_ms`
+to a positive number to enable it:
 
 ```lua
 opts = {
