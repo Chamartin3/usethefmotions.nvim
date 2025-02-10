@@ -1,0 +1,180 @@
+*usethefmotions.txt*                  Stop mashing the arrow keys in Neovim
+
+==============================================================================
+CONTENTS                                            *usethefmotions-contents*
+
+  1. Intro ................................. |usethefmotions-intro|
+  2. Setup ................................. |usethefmotions-setup|
+  3. Configuration ......................... |usethefmotions-config|
+  4. Presets ............................... |usethefmotions-presets|
+  5. Blocking the keys ..................... |usethefmotions-blocking|
+  6. Custom groups ......................... |usethefmotions-custom-groups|
+  7. Commands .............................. |usethefmotions-commands|
+  8. Lua API ............................... |usethefmotions-api|
+  9. Health ................................ |usethefmotions-health|
+
+==============================================================================
+1. INTRO                                               *usethefmotions-intro*
+
+A tiny plugin that catches you mashing the arrow keys (or any other key you
+configure) and shows a notification reminding you that vim has motions.
+Optionally, it can disable the offending key for a few seconds after the
+notification fires — the actual cure for muscle memory.
+
+The honest recommendation, if you really want to learn the motions, is to
+just unmap the arrow keys entirely (`<Nop>`). This plugin is for the rest of
+us — people who don't want to go full cold-turkey but still want a nudge.
+
+==============================================================================
+2. SETUP                                              *usethefmotions-setup*
+
+With lazy.nvim: >lua
+
+    {
+      'Chamartin3/usethefmotions.nvim',
+      event = 'VeryLazy',
+      opts = {},
+    }
+<
+
+The defaults are sensible; the plugin will start nagging as soon as you
+mash an arrow key five times in a row.
+
+==============================================================================
+3. CONFIGURATION                                     *usethefmotions-config*
+
+`setup({opts})` accepts a `usethefmotions.Config` table. Every field is
+optional. The shape: >lua
+
+    {
+      -- start enabled. set to false to opt in manually with :UseTheFMotions toggle.
+      enabled = true,
+
+      -- how long to shut up between notifications (ms). default: 5 minutes.
+      cooldown_ms = 5 * 60 * 1000,
+
+      -- keymap that flips the plugin on/off. set to false to skip it.
+      toggle_keymap = '<leader>nm',
+
+      -- named key groups. see |usethefmotions-presets| for the built-ins.
+      groups = {
+        vertical = {
+          enabled = true,
+          keys = { '<Up>', '<Down>' },
+          breakpoints = { 5, 10 },   -- list or set: { [5] = true, [10] = true }
+          block_ms = 0,              -- 0 = no blocking
+          title = 'Remember that you can move vertically with <j>, <k>',
+          message = '...',
+        },
+      },
+    }
+<
+
+==============================================================================
+4. PRESETS                                          *usethefmotions-presets*
+
+Six built-in presets, three enabled out of the box:
+
+  Enabled by default ~
+    `vertical`    `<Up>` / `<Down>` mashing
+    `horizontal`  `<Left>` / `<Right>` mashing
+    `backspace`   `<BS>` one-character-at-a-time deleting
+
+  Opt-in (set `enabled = true`) ~
+    `jk_holding`  holding `j` / `k` as a scroll wheel
+    `hl_holding`  holding `h` / `l` instead of word motions
+    `delete_char` mashing `x` instead of `d{motion}`
+
+Opt into a disabled preset like this: >lua
+
+    require('usethefmotions').setup({
+      groups = { jk_holding = { enabled = true } },
+    })
+<
+
+==============================================================================
+5. BLOCKING THE KEYS                               *usethefmotions-blocking*
+
+A notification is easy to dismiss. The middle ground between "do nothing"
+and "unmap arrows entirely" is to disable the key for a few seconds after
+the notification fires. Set `block_ms` on a group to a positive value: >lua
+
+    require('usethefmotions').setup({
+      groups = {
+        vertical   = { keys = { '<Up>',   '<Down>'  }, block_ms = 5000 },
+        horizontal = { keys = { '<Left>', '<Right>' }, block_ms = 5000 },
+      },
+    })
+<
+
+Only the exact key you mashed is blocked, not every key in the group.
+
+==============================================================================
+6. CUSTOM GROUPS                              *usethefmotions-custom-groups*
+
+`groups` is open-ended. Define a group for any key habit: >lua
+
+    require('usethefmotions').setup({
+      groups = {
+        backspace_abuse = {
+          keys = { '<BS>' },
+          breakpoints = { 8 },
+          block_ms = 3000,
+          title = 'Stop deleting one character at a time',
+          message = 'try db, dw, ciw, di", ...',
+        },
+      },
+    })
+<
+
+==============================================================================
+7. COMMANDS                                        *usethefmotions-commands*
+
+                                                        *:UseTheFMotions*
+:UseTheFMotions {action} [{group}]
+        Run an action against the plugin or a specific group.
+
+        Actions: ~
+          `toggle`   flip the plugin on or off
+          `enable`   force on
+          `disable`  force off
+          `status`   print the global state plus per-group state
+
+        If a {group} name is given, the action operates on that group only.
+        Group names tab-complete from the registered groups.
+
+==============================================================================
+8. LUA API                                              *usethefmotions-api*
+
+>lua
+    local m = require('usethefmotions')
+
+    m.setup({})                         -- (re)configure. idempotent.
+
+    m.enable()                          -- global
+    m.disable()
+    m.toggle()
+    m.is_enabled()                      -- -> boolean
+
+    m.enable_group('vertical')          -- per-group
+    m.disable_group('jk_holding')
+    m.toggle_group('backspace')
+
+    m.group_names()                     -- sorted list of group names
+    m.stats()                           -- { enabled, groups = { ... } }
+<
+
+`setup()` may be called multiple times. The plugin tears down its keymaps,
+its `vim.on_key` listener and its autocmd group before re-attaching.
+
+==============================================================================
+9. HEALTH                                            *usethefmotions-health*
+
+>
+    :checkhealth usethefmotions
+<
+
+Reports Neovim version, whether `setup` has run, and whether the reminder
+is currently enabled.
+
+ vim:tw=78:ts=8:ft=help:norl:
